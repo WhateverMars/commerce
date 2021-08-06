@@ -1,0 +1,87 @@
+{% extends "auctions/layout.html" %}
+
+{% block body %}
+
+    {% if message %}
+        <div>{{ message }}</div>
+    {% endif %}
+    
+    <h1>{{listing.item_name}}</h1>
+    <div>
+        <div style="text-align: right;" class="float-right">
+            {% if user.is_authenticated and user != listing.seller%}
+                <form action="{% url 'watch_toggle' %}" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="item_id" value="{{listing.item_id}}">
+                    <input class="btn btn-primary" type="submit" value="{{watch_btn}}">
+                </form>
+        
+            {% endif %}
+        </div>
+        <br>
+        <picture>
+        <img src="{{listing.image}}" alt="image of {{listing.item_name}}" class="rounded float-left"  style="margin-right: 100px; height: 350px;">  
+        </picture>
+        {% if listing.active == 0 %}
+            This action is closed
+        {% endif %}
+        <div style="margin: 5%;">
+            <h2>Description</h2>
+            <p>{{listing.description}}</p>
+            
+            Starting price: €{{listing.st_price}} <br>
+            <br>
+            {% if current_price.bidder == listing.seller %}
+                Current highest bid: No bids yet
+            {% else %}
+                Current highest bid: €{{current_price.price}} from {{current_price.bidder}}
+            {% endif %}
+            <br><br>
+            {% if user == listing.seller and listing.active == 1%}
+                <form action="{% url 'listing' listing.item_id %}" method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="status" value="close">
+                    <input class="btn btn-primary" type="submit" value="Close Auction">
+                </form>
+            {% else %}
+                The seller is {{listing.seller}} <br>
+                {% if listing.active == 1 %}
+                    {% if user.is_authenticated %}
+                        <form style="margin: 8px" action="{% url 'listing' listing.item_id %}" method="post">
+                            {% csrf_token %}
+                            <input type="number" class="form-control" style="text-align: right;  width: 12%; margin: 0 8px; float: left;" required min="{{current_price.price}}" step="0.01" name="bid" id="bid" placeholder="{{current_price.price}}">
+                            <input class="btn btn-primary" type="submit" value="Bid">
+                        </form>
+                
+                    {% else %}
+                        Please sign in or create an account to bid
+                    {% endif %}
+                {% else %}
+                    <h3>The winner is {{current_price.bidder}}</h3>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+    <br>
+    <div style=" margin: 0 20%;">
+        <h3>Comments</h3>
+        {% for comment in comments %}
+            <div style="width: 600px; padding: 6px; margin: 20px; outline: thick ridge grey;">
+                "{{comment.content}}"
+                <div style="font-size: 80%; margin-top: 8px; text-align: right;">
+                    {{comment.commenter}} at {{comment.date}}
+                </div>
+            </div>
+        {% endfor%}
+        {% if user.is_authenticated %}
+            <form style="width: 600px; padding: 6px; margin: 20px; " action="{% url 'comment' %}" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="item_id" value="{{listing.item_id}}">
+                <textarea style="margin-bottom: 6px; outline: thick ridge grey;" name="content" required placeholder="Type a comment here" cols="30" rows="5"></textarea><br>
+                <input class="btn btn-primary" type="submit" value="Comment">
+            </form>
+        {% else %}
+            <br>Please sign in to comment
+        {% endif %}
+    </div>
+{% endblock %}

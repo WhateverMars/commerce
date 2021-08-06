@@ -1,0 +1,17 @@
+{% extends "auctions/layout.html" %}
+
+{% block body %}
+    <h2>Active Listings</h2>
+
+    <div class="container">
+        <div class="row">
+            {% for listing in listings %}
+            <div class="col-md-" style="height: 100px; border: 2px solid grey; padding: 5px; text-align: center; margin:10px; border-radius: 5px;;">
+                <a href="{% url 'listing' listing.item_id %}">
+                    <picture><img style="height: 100%;" src="{{listing.image}}" alt="image of listing.listing_name" class="img-thumbnail"></picture> {{ listing.item_name}} : €{{listing.cur_price}} 
+                </a>
+            </div>
+            {% endfor%}
+        </div>
+    </div>
+{% endblock %}
