@@ -12,22 +12,18 @@ from . import util
 categories_list = ["Books", "Sports", "Electronics", "Grocery", "Home", "Toys", "Clothing", "Other"]
 
 def index(request):
-    #print("--__---____-----_____")
+
+    # gets a list of only the active items
     active_listings = Listing.objects.filter(active=True)
-    #print("active listings:")
-    #print(active_listings)
     price = {}
     i = 0
+    
+    # grabs the up to date prices to display
     for listing in active_listings:
-        
-        #print("No: "+ str(i) + " " + str(listing.item_name) + " costs €" + str(util.highest_bid(listing).price))
-        #print("price["+str(listing.item_id)+"] = "+ str(util.highest_bid(listing).price))
-
         price.update({ listing.item_id : str(util.highest_bid(listing).price) })
         i += 1
         
-    #print("pricing fn returns: ")
-    #print(price)
+   
     return render(request, "auctions/index.html", {
         "listings" : Listing.objects.filter(active=True),
         "users" : User.objects.all(),
@@ -91,6 +87,7 @@ def register(request):
 def new_listing(request):
     if request.method == "POST":
 
+        # receive the posted data
         seller = request.user.id
         item_name = request.POST["listing_name"]
         description = request.POST["content"]
@@ -98,14 +95,6 @@ def new_listing(request):
         st_price = request.POST["price"]
         creation_date = datetime.datetime.now()
         category = request.POST["category"]
-        #below print statements are for testing
-        #print("seller id is: "+str(seller))
-        #print("item name is: "+item_name)
-        #print("content is: "+description)
-        #print("image is: "+image)
-        #print("start price is: "+st_price)
-        #print("Time is: "+str(creation_date))
-        #print("The category is: " + category)
 
         if not seller:
             return render(request, "auctions/register.html", {
@@ -132,11 +121,11 @@ def new_listing(request):
                 "message" : "Please provide a price for listing"
             })
 
+        # create the listing
         try:
             listing = Listing(creation_date = creation_date, image=image, item_name=item_name, description=description, seller=request.user, st_price=st_price, cur_price=st_price, active=True, category=category)
             listing.save()
             item = Listing.objects.get(creation_date=creation_date, seller=request.user, item_name=item_name)
-            #print(item)
             bid = Bid(item=item, price=st_price, bidder=request.user)
             bid.save()
         except IntegrityError:
@@ -144,7 +133,6 @@ def new_listing(request):
                 "message": "name already taken."
             })
 
-        #print(Listing)
         return HttpResponseRedirect(reverse("index"))
 
     return render(request, "auctions/new_listing.html", {
@@ -174,7 +162,7 @@ def listing(request, item_id):
             
             
 
-            #take in the bid.
+            # take in the bid.
             new_bid = float(request.POST["bid"])
             if not new_bid:
                 return render(request, "auctions/listing.html", {
@@ -229,6 +217,7 @@ def watchlist(request):
 
     q = Listing.objects.filter(item_id = -1) # creates an empty queryset to add on
        
+    # adds the items of their watchlist to a list to display
     for watchitem in watchlist:
         listitem = Listing.objects.filter(item_id = watchitem.item_id)
         q = listitem.union(listitem,q)
@@ -241,6 +230,7 @@ def watchlist(request):
     
 def comment(request):
     if request.method == "POST":
+        # take in the posted data
         listing = Listing(item_id=request.POST["item_id"])
         content = request.POST["content"]
         commenter = request.user
@@ -257,13 +247,13 @@ def comment(request):
                     "comments" : Comment.objects.filter(item_id = listing.item_id)
                 })
     
-#this adds item to the users watchlist
+# this adds item to the users watchlist
 def watch_toggle(request):
     if request.method == "POST":
         item_id = request.POST["item_id"]
-        #if item is already on watchlist
+        # if item is already on watchlist
         if Watchlist.objects.filter(item = item_id, watcher = request.user):
-            #remove from watchlist
+            # remove from watchlist
             Watchlist.objects.get(item = item_id, watcher = request.user).delete()
             return render(request, "auctions/listing.html", {
                 "message" : "Removed from watchlist",
@@ -272,7 +262,7 @@ def watch_toggle(request):
                 "watch_btn" : util.watch_btn(request.user, Listing.objects.get(item_id = item_id)),
                 "comments" : Comment.objects.filter(item_id = item_id) 
             })
-        #add to watchlist
+        # add to watchlist
         listing = Listing(item_id=item_id)
         watchitem = Watchlist(item = listing, watcher = request.user)
         watchitem.save()
@@ -285,6 +275,7 @@ def watch_toggle(request):
         })
 
 def categories(request):
+    # this allows the user to see all listings from a particular category
     if request.method == "POST":
         listings = Listing.objects.filter(category = request.POST["category"])
         return render(request, "auctions/categories.html", {

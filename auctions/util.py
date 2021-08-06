@@ -6,7 +6,6 @@ def highest_bid(listing_id):
     item_bids = Bid.objects.filter(item=listing_id)
     highest_bid = item_bids.order_by("-price")[0]
     return highest_bid
-    #print(highest_bid)
 
 def watch_btn(user,item):
     if str(user) is str(AnonymousUser()):
